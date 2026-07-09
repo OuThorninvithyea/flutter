@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:kaifin_v1/core/storage/token_storage.dart';
+import 'package:kaifin_v1/core/widgets/app_loading_indicator.dart';
 import 'package:kaifin_v1/features/auth/data/models/login_request.dart';
 import 'package:kaifin_v1/features/auth/data/services/auth_api.dart';
+import 'package:kaifin_v1/core/network/api_exception.dart';
+import 'package:kaifin_v1/features/home/presentation/home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,9 +17,16 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
+  final tokenStorage = const TokenStorage();
+
+  bool get canSubmit {
+    return usernameController.text.trim().isNotEmpty &&
+        passwordController.text.isNotEmpty &&
+        !islogginIn;
+  }
 
   bool obscurePassword = true;
-  bool isLogginIn = false;
+  bool islogginIn = false;
 
   @override
   void dispose() {
@@ -27,21 +38,38 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> login() async {
     final username = usernameController.text.trim();
     final password = passwordController.text;
-    final url = ApiConfig.loginUrl();
 
     if (username.isEmpty || password.isEmpty) {
       return;
     }
 
     setState(() {
-      isLogginIn = true;
+      islogginIn = true;
     });
 
     try {
       final request = LoginRequest(username: username, password: password);
       final response = await AuthApi.login(request);
-    }
+      final token = response.data.auth.token;
+      await tokenStorage.saveToken(token);
+      if (!mounted) return;
 
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomePage(title: 'Home')),
+      );
+    } on ApiException catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } finally {
+      if (mounted) {
+        setState(() {
+          islogginIn = false;
+        });
+      }
+    }
   }
 
   @override
@@ -105,6 +133,9 @@ class _LoginPageState extends State<LoginPage> {
 
                     TextField(
                       controller: usernameController,
+                      onChanged: (_) {
+                        setState(() {});
+                      },
                       decoration: const InputDecoration(
                         hintText: 'Input username',
                         hintStyle: TextStyle(color: Color(0xFFBCBCBC)),
@@ -121,6 +152,9 @@ class _LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 2),
                     TextField(
                       controller: passwordController,
+                      onChanged: (_) {
+                        setState(() {});
+                      },
                       obscureText: obscurePassword,
                       decoration: InputDecoration(
                         hintText: 'Input your password',
@@ -148,7 +182,7 @@ class _LoginPageState extends State<LoginPage> {
                     SizedBox(
                       height: 54,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: canSubmit ? login : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF1849D6),
                           foregroundColor: Colors.white,
@@ -157,13 +191,15 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text(
-                          'Login',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                        child: islogginIn
+                            ? const AppLoadingIndicator(size: 28)
+                            : const Text(
+                                'Login',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
                     ),
 
