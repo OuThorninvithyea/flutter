@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
-import '../features/home/presentation/home_page.dart';
+import '../features/auth/presentation/login_page.dart';
 
-class KaifunApp extends StatelessWidget {
-  const KaifunApp({super.key});
+class KaifinApp extends StatelessWidget {
+  const KaifinApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Kaifun',
+      title: 'Kaifin',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const HomePage(title: 'Kaifun'),
+      home: const LoginPage(),
     );
   }
 }

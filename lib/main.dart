@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'app/kaifun_app.dart';
+import 'app/kaifin_app.dart';
 
 void main() {
-  runApp(const KaifunApp());
+  runApp(const KaifinApp());
 }

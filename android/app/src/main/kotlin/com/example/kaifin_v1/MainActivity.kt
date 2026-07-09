@@ -1,4 +1,4 @@
-package com.example.kaifun_v1
+package com.example.kaifin_v1
 
 import io.flutter.embedding.android.FlutterActivity
 
